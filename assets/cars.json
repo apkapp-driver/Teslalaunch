@@ -1,0 +1,4 @@
+[
+  { "id": "model3", "name": "Tesla Model 3", "file": "tesla.glb" },
+  { "id": "generico", "name": "Genérico", "file": "car.glb" }
+]
