@@ -1,5 +1,5 @@
 // Minimal offline cache for the app shell. Map tiles still need the network.
-const CACHE = "midash-v2";
+const CACHE = "midash-v1";
 const SHELL = [
     "./",
     "./index.html",
@@ -25,14 +25,10 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
     const url = new URL(e.request.url);
-    // Red primero (así las versiones nuevas llegan siempre); la caché solo si no hay conexión.
-    if (url.origin === location.origin && !url.pathname.endsWith(".glb")) {
+    // Only serve same-origin shell files from cache; let map/CDN go to network.
+    if (url.origin === location.origin) {
         e.respondWith(
-            fetch(e.request).then((res) => {
-                const copia = res.clone();
-                caches.open(CACHE).then((c) => c.put(e.request, copia)).catch(() => {});
-                return res;
-            }).catch(() => caches.match(e.request))
+            caches.match(e.request).then((hit) => hit || fetch(e.request))
         );
     }
 });

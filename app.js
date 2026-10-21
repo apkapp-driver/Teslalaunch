@@ -22,47 +22,10 @@ setInterval(tickClock, 1000);
 const carModel = document.getElementById("carModel");
 const carSelect = document.getElementById("carSelect");
 
-const carMsg = document.getElementById("carMsg");
-let carTimer = null, carFile = null;
-function showCarMsg(t) { carMsg.textContent = t; carMsg.hidden = !t; }
-
 function setCar(file) {
-    carFile = file;
-    showCarMsg("Cargando modelo 3D…");
-    clearTimeout(carTimer);
-    // si en 45 s no ha cargado (modelo pesado / conexión lenta) se pasa al modelo ligero
-    carTimer = setTimeout(() => carFallback("tarda demasiado"), 45000);
     carModel.setAttribute("src", "assets/" + file);
     try { localStorage.setItem("midash.car", file); } catch (_) {}
 }
-function carFallback(motivo) {
-    clearTimeout(carTimer);
-    if (carFile !== "car.glb") {
-        showCarMsg("El modelo " + motivo + "; uso el genérico…");
-        if (carSelect.querySelector('option[value="car.glb"]')) carSelect.value = "car.glb";
-        setCar("car.glb");
-    } else {
-        showCarMsg("No se pudo mostrar el 3D (" + motivo + "). Revisa conexión o WebGL.");
-    }
-}
-carModel.addEventListener("progress", (e) => {
-    const p = e.detail && e.detail.totalProgress;
-    if (p != null && p < 1) showCarMsg("Cargando modelo 3D… " + Math.round(p * 100) + "%");
-});
-carModel.addEventListener("load", () => { clearTimeout(carTimer); showCarMsg(""); });
-carModel.addEventListener("error", () => carFallback("no se pudo cargar"));
-
-// Si el visor (model-viewer) no llega desde unpkg, se prueba otro CDN.
-setTimeout(() => {
-    if (customElements.get("model-viewer")) return;
-    const sc = document.createElement("script");
-    sc.type = "module";
-    sc.src = "https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js";
-    document.head.appendChild(sc);
-    setTimeout(() => {
-        if (!customElements.get("model-viewer")) showCarMsg("No se pudo cargar el visor 3D (sin conexión o bloqueado).");
-    }, 8000);
-}, 3500);
 
 async function loadCars() {
     let cars = [];
@@ -155,7 +118,7 @@ document.querySelectorAll("[data-media]").forEach((btn) => {
 
 /* ---------- Day / night theme ---------- */
 const STYLES = {
-    day: "https://tiles.openfreemap.org/styles/positron",   // claro y pálido
+    day: "https://tiles.openfreemap.org/styles/positron", // pale
     night: "https://tiles.openfreemap.org/styles/dark",
 };
 let themeMode = "auto"; // auto | day | night
@@ -173,9 +136,8 @@ const map = new maplibregl.Map({
     container: "map",
     style: currentStyleUrl,
     center: [-2.47, 43.21], // País Vasco (donde hay datos de señales)
-    zoom: 15,
-    pitch: 55,              // vista 3D por defecto
-    maxPitch: 75,
+    zoom: 13,
+    pitch: 50, // 3D view by default
     attributionControl: { compact: true },
 });
 map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "top-right");
@@ -215,13 +177,11 @@ setInterval(() => { if (themeMode === "auto") applyTheme(); }, 60000);
 
 /* ---------- Map view modes (2D / follow / 3D) ---------- */
 const views = { "2D": { pitch: 0, bearing: 0 }, "Seguir": { pitch: 0 }, "3D": { pitch: 55 } };
-const DEFAULT_VIEW = "3D";
 const viewBar = document.createElement("div");
 viewBar.className = "view-bar";
 for (const name of Object.keys(views)) {
     const b = document.createElement("button");
     b.textContent = name;
-    if (name === DEFAULT_VIEW) b.classList.add("on");
     b.onclick = () => {
         viewBar.querySelectorAll("button").forEach((x) => x.classList.remove("on"));
         b.classList.add("on");
@@ -245,8 +205,21 @@ themeBtn.onclick = () => {
 refreshThemeBtn();
 document.getElementById("map").appendChild(themeBtn);
 
+/* ---------- Fullscreen map toggle ---------- */
+const fullBtn = document.createElement("button");
+fullBtn.className = "map-full-btn";
+fullBtn.textContent = "⛶";
+fullBtn.title = "Pantalla completa";
+fullBtn.onclick = () => {
+    const pane = document.querySelector(".pane-map");
+    const full = pane.classList.toggle("fullscreen");
+    fullBtn.textContent = full ? "✕" : "⛶";
+    setTimeout(() => map.resize(), 60);
+};
+document.getElementById("map").appendChild(fullBtn);
+
 /* ---------- Radars + signs (data kept so they re-add on style switch) ---------- */
-const SIGN_COLORS = { s: "#D98A8A", c: "#E3B07A", t: "#8CC79A", p: "#8DB5DE" };
+const SIGN_COLORS = { s: "#E53935", c: "#FB8C00", t: "#43A047", p: "#1E88E5" };
 const SIGN_SPEECH = { s: "Stop", c: "Ceda el paso", t: "Semáforo", p: "Paso de peatones" };
 const SIGN_WARN_M = 90;
 let radars = [];
@@ -255,30 +228,8 @@ let radarData = null;
 let signData = null;
 let lastSignKey = null;
 
-/* Edificios 3D pálidos sobre cualquier estilo vectorial OpenMapTiles (si el estilo ya trae los suyos, no se duplican) */
-function addBuildings() {
-    if (map.getLayer("edificios3d")) return;
-    const st = map.getStyle();
-    if (!st || !st.layers) return;
-    if (st.layers.some((l) => l.type === "fill-extrusion")) return;
-    const bl = st.layers.find((l) => l["source-layer"] === "building" && l.source);
-    if (!bl) return;
-    const firstSymbol = st.layers.find((l) => l.type === "symbol");
-    map.addLayer({
-        id: "edificios3d", type: "fill-extrusion", source: bl.source, "source-layer": "building",
-        minzoom: 14,
-        paint: {
-            "fill-extrusion-color": isNight() ? "#445066" : "#D8DDE6",
-            "fill-extrusion-height": ["coalesce", ["get", "render_height"], ["get", "height"], 8],
-            "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-            "fill-extrusion-opacity": 0.85,
-        },
-    }, firstSymbol ? firstSymbol.id : undefined);
-}
-
 function addOverlays() {
     if (!map.isStyleLoaded()) return; // sources can only be added to a loaded style
-    addBuildings();
     if (routeData && !map.getSource("route")) drawRoute(); // keep route across style switches
     if (signData && !map.getSource("signs")) {
         map.addSource("signs", { type: "geojson", data: signData });
@@ -293,7 +244,7 @@ function addOverlays() {
                     "#90A4AE",
                 ],
                 "circle-stroke-width": 1,
-                "circle-stroke-color": "#161B24",
+                "circle-stroke-color": "#0B0E14",
             },
         });
     }
@@ -303,9 +254,9 @@ function addOverlays() {
             id: "radars", type: "circle", source: "radars",
             paint: {
                 "circle-radius": 5,
-                "circle-color": "#DC9A9A",
+                "circle-color": "#E57373",
                 "circle-stroke-width": 1.5,
-                "circle-stroke-color": "#161B24",
+                "circle-stroke-color": "#0B0E14",
             },
         });
     }
@@ -416,7 +367,7 @@ function drawRoute() {
     map.addLayer({
         id: "route", type: "line", source: "route",
         layout: { "line-join": "round", "line-cap": "round" },
-        paint: { "line-color": "#6FAFD6", "line-width": 7, "line-opacity": 0.92 },
+        paint: { "line-color": "#4FC3F7", "line-width": 7, "line-opacity": 0.9 },
     }, map.getLayer("radars") ? "radars" : undefined);
 }
 
@@ -564,84 +515,11 @@ async function refreshTesla() {
         }
         document.getElementById("teslaRange").textContent = d.range_km != null ? `· ${d.range_km} km` : "";
         document.getElementById("teslaBolt").hidden = !d.charging;
-        document.getElementById("teslaBar").style.background = d.charging ? "#9AD8A6" : "";
+        document.getElementById("teslaBar").style.background = d.charging ? "#7CE38B" : "";
     } catch (_) {}
 }
 refreshTesla();
 setInterval(refreshTesla, 30000);
-
-/* ---------- Mapa a pantalla completa / vuelta a las 3 ventanas ---------- */
-const dashEl = document.querySelector(".dash");
-const fsBtn = document.getElementById("fsBtn");
-let fullMap = false;
-try { fullMap = localStorage.getItem("midash.full") === "1"; } catch (_) {}
-function applyFull() {
-    dashEl.classList.toggle("full", fullMap);
-    fsBtn.textContent = fullMap ? "▣" : "⛶";
-    fsBtn.title = fullMap ? "Volver a las ventanas" : "Mapa a pantalla completa";
-    setTimeout(() => map.resize(), 60);
-    setTimeout(() => map.resize(), 400);
-}
-fsBtn.onclick = () => {
-    fullMap = !fullMap;
-    try { localStorage.setItem("midash.full", fullMap ? "1" : "0"); } catch (_) {}
-    applyFull();
-};
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && fullMap) fsBtn.click(); });
-
-/* ---------- Elegir qué ver en cada ventana (izquierda / derecha / oculto) ---------- */
-const WIDGETS = [
-    { id: "clock", name: "Reloj" },
-    { id: "media", name: "Música" },
-    { id: "car",   name: "Coche" },
-    { id: "apps",  name: "Accesos" },
-];
-const DEFAULT_LAYOUT = { clock: "L", media: "L", car: "L", apps: "R" };
-let layout = Object.assign({}, DEFAULT_LAYOUT);
-try { Object.assign(layout, JSON.parse(localStorage.getItem("midash.layout")) || {}); } catch (_) {}
-const paneL = document.getElementById("paneLeft"), paneR = document.getElementById("paneRight");
-function applyLayout() {
-    for (const w of WIDGETS) {
-        const el = document.querySelector('.widget[data-w="' + w.id + '"]');
-        const side = layout[w.id];
-        if (side === "L") { if (el.parentNode !== paneL) paneL.appendChild(el); el.hidden = false; }
-        else if (side === "R") { if (el.parentNode !== paneR) paneR.appendChild(el); el.hidden = false; }
-        else el.hidden = true;
-    }
-    const nL = WIDGETS.filter((w) => layout[w.id] === "L").length;
-    const nR = WIDGETS.filter((w) => layout[w.id] === "R").length;
-    paneL.classList.toggle("empty", nL === 0);
-    paneR.classList.toggle("empty", nR === 0);
-    dashEl.style.setProperty("--cols", [nL ? "320px" : "", "1.3fr", nR ? "1fr" : ""].filter(Boolean).join(" "));
-    try { localStorage.setItem("midash.layout", JSON.stringify(layout)); } catch (_) {}
-    setTimeout(() => map.resize(), 60);
-}
-const layoutDlg = document.getElementById("layoutDlg");
-function renderLayoutDlg() {
-    const rows = document.getElementById("layoutRows");
-    rows.innerHTML = "";
-    for (const w of WIDGETS) {
-        const row = document.createElement("div");
-        row.className = "lay-row";
-        row.innerHTML = `<span class="lay-name">${w.name}</span>`;
-        const seg = document.createElement("div");
-        seg.className = "seg";
-        for (const [k, t] of [["L", "Izq"], ["R", "Der"], ["H", "Oculto"]]) {
-            const b = document.createElement("button");
-            b.type = "button"; b.textContent = t;
-            if (layout[w.id] === k) b.classList.add("on");
-            b.onclick = () => { layout[w.id] = k; applyLayout(); renderLayoutDlg(); };
-            seg.appendChild(b);
-        }
-        row.appendChild(seg);
-        rows.appendChild(row);
-    }
-}
-document.getElementById("layoutBtn").onclick = () => { layoutDlg.hidden = !layoutDlg.hidden; if (!layoutDlg.hidden) renderLayoutDlg(); };
-document.getElementById("layoutClose").onclick = () => { layoutDlg.hidden = true; };
-document.getElementById("layoutReset").onclick = () => { layout = Object.assign({}, DEFAULT_LAYOUT); applyLayout(); renderLayoutDlg(); };
-applyLayout();
-applyFull();
 
 /* ---------- PWA service worker ---------- */
 if ("serviceWorker" in navigator) {

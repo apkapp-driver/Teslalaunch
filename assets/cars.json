@@ -1,4 +1,4 @@
 [
-  { "id": "model3", "name": "Tesla Model 3", "file": "tesla.glb" },
-  { "id": "generico", "name": "Genérico", "file": "car.glb" }
+  { "id": "coche", "name": "Mi coche", "file": "car.glb" },
+  { "id": "model3", "name": "Tesla Model 3", "file": "tesla.glb" }
 ]
