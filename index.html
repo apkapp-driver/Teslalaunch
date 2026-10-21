@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>MiDash</title>
-    <meta name="theme-color" content="#0B0E14" />
+    <meta name="theme-color" content="#141922" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
@@ -17,13 +17,13 @@
 <body>
     <main class="dash">
         <!-- Left: clock + media + car -->
-        <section class="pane pane-left">
-            <div class="clock">
+        <section class="pane pane-left" id="paneLeft">
+            <div class="widget clock" data-w="clock">
                 <div id="time" class="time">--:--</div>
                 <div id="date" class="date"></div>
             </div>
 
-            <div class="card media">
+            <div class="widget card media" data-w="media">
                 <div class="media-art" id="mediaArt">♪</div>
                 <div class="media-info">
                     <div class="media-title" id="mediaTitle">Sin reproducción</div>
@@ -36,11 +36,13 @@
                 </div>
             </div>
 
-            <div class="card car">
+            <div class="widget card car" data-w="car">
                 <select id="carSelect" class="car-select" aria-label="Modelo de coche"></select>
+                <div id="carMsg" class="car-msg" hidden></div>
                 <model-viewer
                     id="carModel"
                     src="assets/car.glb"
+                    loading="eager"
                     camera-controls
                     auto-rotate
                     auto-rotate-delay="0"
@@ -75,10 +77,22 @@
             </div>
             <div id="navInstruction" class="nav-instruction" hidden></div>
             <div id="alert" class="alert" hidden></div>
+            <button id="fsBtn" class="map-btn fs-btn" type="button" title="Mapa a pantalla completa">⛶</button>
+            <button id="layoutBtn" class="map-btn layout-btn" type="button" title="Elegir qué ver en cada ventana">▦</button>
+            <div id="layoutDlg" class="dlg" hidden>
+                <div class="dlg-title">Qué ver en cada ventana</div>
+                <div id="layoutRows"></div>
+                <div class="dlg-foot">
+                    <button id="layoutReset" type="button">Restablecer</button>
+                    <button id="layoutClose" type="button" class="primary">Listo</button>
+                </div>
+            </div>
         </section>
 
         <!-- Right: shortcuts -->
-        <section class="pane pane-apps" id="apps"></section>
+        <section class="pane pane-right" id="paneRight">
+            <div class="widget" data-w="apps"><div id="apps" class="apps-grid"></div></div>
+        </section>
     </main>
 
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
