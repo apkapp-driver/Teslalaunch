@@ -3,60 +3,58 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>TeslaLaunch</title>
+    <title>MiDash</title>
     <meta name="theme-color" content="#0B0E14" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+    <link rel="stylesheet"
+          href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
     <link rel="stylesheet" href="style.css" />
-    <script type="module" src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+    <script type="module"
+            src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
 </head>
 <body>
-    <!-- Mapa de fondo a pantalla completa -->
-    <div id="map" class="map-bg"></div>
-
-    <!-- Botones flotantes globales -->
-    <button id="fullscreenBtn" class="global-btn fullscreen-btn" title="Pantalla completa">⛶</button>
-    <button id="themeBtn" class="global-btn theme-btn" title="Tema">🌓</button>
-
-    <!-- Contenedor de ventanas flotantes -->
-    <div id="desktop" class="desktop">
-        <!-- Ventana Reloj -->
-        <div class="window" data-win="clock" style="left:20px; top:20px; width:220px; height:120px;">
-            <div class="win-header">
-                <span class="win-title">Reloj</span>
-                <div class="win-controls">
-                    <button class="win-min" title="Minimizar">−</button>
-                    <button class="win-close" title="Cerrar">×</button>
-                </div>
-            </div>
-            <div class="win-body clock-body">
+    <main class="dash">
+        <!-- Left: clock + media + car -->
+        <section class="pane pane-left">
+            <div class="clock">
                 <div id="time" class="time">--:--</div>
                 <div id="date" class="date"></div>
             </div>
-            <div class="resize-handle"></div>
-        </div>
 
-        <!-- Ventana Coche 3D -->
-        <div class="window" data-win="car" style="left:20px; top:160px; width:300px; height:360px;">
-            <div class="win-header">
-                <span class="win-title">Coche</span>
-                <div class="win-controls">
-                    <select id="carSelect" class="car-select" aria-label="Modelo"></select>
-                    <button class="win-min">−</button>
-                    <button class="win-close">×</button>
+            <div class="card media">
+                <div class="media-art" id="mediaArt">♪</div>
+                <div class="media-info">
+                    <div class="media-title" id="mediaTitle">Sin reproducción</div>
+                    <div class="media-artist" id="mediaArtist">—</div>
+                </div>
+                <div class="media-controls">
+                    <button class="icon-btn" data-media="prev" aria-label="Anterior">⏮</button>
+                    <button class="icon-btn play" data-media="play" aria-label="Play/Pausa">▶</button>
+                    <button class="icon-btn" data-media="next" aria-label="Siguiente">⏭</button>
                 </div>
             </div>
-            <div class="win-body car-body">
+
+            <div class="card car">
+                <select id="carSelect" class="car-select" aria-label="Modelo de coche"></select>
+                <div class="car-stage">
+                <svg id="carRoad" class="car-road" viewBox="0 0 200 100" preserveAspectRatio="none"></svg>
+                <div id="carLanes" class="car-lanes"></div>
                 <model-viewer
                     id="carModel"
                     src="assets/car.glb"
-                    camera-controls auto-rotate auto-rotate-delay="0"
-                    rotation-per-second="20deg" interaction-prompt="none"
-                    shadow-intensity="1" exposure="1.1" disable-zoom
-                    style="width:100%; height:100%; background:transparent;">
+                    camera-controls
+                    auto-rotate
+                    auto-rotate-delay="0"
+                    rotation-per-second="20deg"
+                    interaction-prompt="none"
+                    shadow-intensity="1"
+                    exposure="1.1"
+                    disable-zoom
+                    aria-label="Modelo 3D del coche">
                 </model-viewer>
+                </div>
                 <div class="car-stats">
                     <span id="teslaPct" class="car-pct">--<small>%</small></span>
                     <span id="teslaRange" class="car-range"></span>
@@ -64,75 +62,64 @@
                 </div>
                 <div class="batt"><div id="teslaBar" class="batt-fill"></div></div>
             </div>
-            <div class="resize-handle"></div>
-        </div>
+        </section>
 
-        <!-- Ventana Música -->
-        <div class="window" data-win="media" style="left:20px; top:540px; width:300px; height:160px;">
-            <div class="win-header">
-                <span class="win-title">Música</span>
-                <div class="win-controls">
-                    <button class="win-min">−</button>
-                    <button class="win-close">×</button>
-                </div>
+        <!-- Center: map -->
+        <section class="pane pane-map">
+            <div id="map" class="map"></div>
+            <button id="searchBtn" class="ctl search-btn" type="button" aria-label="Buscar">🔍</button>
+            <div id="favPlaces" class="fav-places">
+                <button class="fav-chip" data-place="home" aria-label="Casa">🏠</button>
+                <button class="fav-chip" data-place="work" aria-label="Trabajo">💼</button>
             </div>
-            <div class="win-body media-body">
-                <div class="media-art" id="mediaArt">♪</div>
-                <div class="media-info">
-                    <div class="media-title" id="mediaTitle">Sin reproducción</div>
-                    <div class="media-artist" id="mediaArtist">—</div>
-                </div>
-                <div class="media-controls">
-                    <button class="icon-btn" data-media="prev">⏮</button>
-                    <button class="icon-btn play" data-media="play">▶</button>
-                    <button class="icon-btn" data-media="next">⏭</button>
-                </div>
-            </div>
-            <div class="resize-handle"></div>
-        </div>
-
-        <!-- Ventana Accesos directos -->
-        <div class="window" data-win="apps" style="right:20px; top:20px; width:360px; height:520px;">
-            <div class="win-header">
-                <span class="win-title">Accesos</span>
-                <div class="win-controls">
-                    <button class="win-min">−</button>
-                    <button class="win-close">×</button>
-                </div>
-            </div>
-            <div class="win-body apps-body" id="apps"></div>
-            <div class="resize-handle"></div>
-        </div>
-
-        <!-- Ventana Navegación -->
-        <div class="window" data-win="nav" style="right:20px; bottom:20px; width:420px; height:220px;">
-            <div class="win-header">
-                <span class="win-title">Navegación</span>
-                <div class="win-controls">
-                    <button class="win-min">−</button>
-                    <button class="win-close">×</button>
-                </div>
-            </div>
-            <div class="win-body nav-body">
-                <form id="navForm" class="nav-form-inline">
-                    <input id="navSearch" class="nav-input" type="text" placeholder="¿A dónde vamos?" autocomplete="off" />
-                    <button class="nav-go" type="submit">Ir</button>
+            <div id="searchPanel" class="search-panel" hidden>
+                <form id="navForm" class="nav-form">
+                    <input id="navSearch" class="nav-input" type="text"
+                           placeholder="¿A dónde vamos?" autocomplete="off" />
                     <button id="navStop" class="nav-stop" type="button" hidden>✕</button>
                 </form>
-                <div id="favPlaces" class="fav-places-inline">
-                    <button class="fav-chip" data-place="home">🏠 Casa</button>
-                    <button class="fav-chip" data-place="work">💼 Trabajo</button>
-                </div>
-                <div id="navInstruction" class="nav-instruction-inline" hidden></div>
+                <div id="searchList" class="search-list"></div>
             </div>
-            <div class="resize-handle"></div>
-        </div>
+            <div id="navInstruction" class="nav-instruction" hidden></div>
 
-        <!-- Banner de radar (flotante, no es ventana) -->
-        <div id="alert" class="alert" hidden></div>
-    </div>
+            <!-- Next-maneuver card: vector arrow, distance, instruction, lane guidance -->
+            <div id="navCard" class="nav-card" hidden>
+                <div class="nav-card-top">
+                    <div id="navArrow" class="nav-arrow"></div>
+                    <div class="nav-main">
+                        <div id="navDist" class="nav-dist"></div>
+                        <div id="navText" class="nav-text"></div>
+                    </div>
+                </div>
+                <div id="navThen" class="nav-then" hidden></div>
+                <div id="navLanes" class="nav-lanes" hidden></div>
+            </div>
+
+            <!-- Trip bar: time left, distance left, arrival time -->
+            <div id="navEta" class="nav-eta" hidden>
+                <span id="etaMin" class="eta-big"></span>
+                <span id="etaKm" class="eta-sub"></span>
+                <span id="etaArr" class="eta-sub"></span>
+                <button id="etaStop" class="eta-stop" type="button" aria-label="Terminar ruta">✕</button>
+            </div>
+
+            <button id="recenterBtn" class="ctl recenter-btn" type="button" aria-label="Recentrar">◎</button>
+            <button id="optBtn" class="ctl opt-btn" type="button" aria-label="Opciones">⚙</button>
+            <div id="speedHud" class="speed-hud">
+                <div><div id="shV" class="sh-v">0</div><small>km/h</small></div>
+                <div id="shSign" class="rsign small"><span>––</span></div>
+            </div>
+            <div id="alert" class="radar-banner" hidden></div>
+            <div id="halo" class="halo" hidden></div>
+            <div id="optPanel" class="opt-panel" hidden></div>
+        </section>
+
+        <!-- Right: shortcuts -->
+        <section class="pane pane-apps" id="apps"></section>
+    </main>
 
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
     <script src="app.js"></script>
+    <script src="drive.js"></script>
 </body>
 </html>

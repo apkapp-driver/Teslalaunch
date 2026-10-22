@@ -1,10 +1,12 @@
-// Minimal offline cache for the app shell. Map tiles still need the network.
-const CACHE = "midash-v1";
+// Offline cache for the app shell. Network-first so updates are picked up as soon as
+// you're online; the cache is only the fallback. Map tiles and routing always need the network.
+const CACHE = "midash-v3";
 const SHELL = [
     "./",
     "./index.html",
     "./style.css",
     "./app.js",
+    "./drive.js",
     "./manifest.webmanifest",
     "./icon.svg",
 ];
@@ -25,10 +27,17 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
     const url = new URL(e.request.url);
-    // Only serve same-origin shell files from cache; let map/CDN go to network.
-    if (url.origin === location.origin) {
-        e.respondWith(
-            caches.match(e.request).then((hit) => hit || fetch(e.request))
-        );
-    }
+    // Only handle same-origin GETs; let map/CDN/API calls go straight to the network.
+    if (e.request.method !== "GET" || url.origin !== location.origin) return;
+    e.respondWith(
+        fetch(e.request)
+            .then((res) => {
+                if (res.ok && SHELL.some((p) => url.pathname.endsWith(p.replace("./", "/")) || url.pathname === "/")) {
+                    const copy = res.clone();
+                    caches.open(CACHE).then((c) => c.put(e.request, copy));
+                }
+                return res;
+            })
+            .catch(() => caches.match(e.request)),
+    );
 });
