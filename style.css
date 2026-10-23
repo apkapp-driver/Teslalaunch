@@ -405,3 +405,7 @@ html, body {
 .pane-left .car .car-stats { flex: 0 0 auto !important; }
 .pane-left .car .batt { flex: 0 0 160px !important; }
 .pane-apps:not(.open) { display: none !important; }
+
+.op-file { display: inline-block !important; background: var(--surface-2); border-radius: 10px; padding: 8px 12px; cursor: pointer; width: fit-content; }
+.op-car { display: flex; align-items: center; gap: 6px; }
+.op-car span { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

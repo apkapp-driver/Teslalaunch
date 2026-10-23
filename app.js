@@ -22,8 +22,13 @@ setInterval(tickClock, 1000);
 const carModel = document.getElementById("carModel");
 const carSelect = document.getElementById("carSelect");
 
+const carMeta = {};   // file -> { yaw }  (which way each model faces)
+const carUrls = {};   // file -> blob URL for cars imported by the user
+let carYawDeg = 0;
 function setCar(file) {
-    carModel.setAttribute("src", "assets/" + file);
+    carYawDeg = (carMeta[file] && carMeta[file].yaw) || 0;
+    carModel.setAttribute("camera-orbit", carYawDeg + "deg 76deg 105%");
+    carModel.setAttribute("src", carUrls[file] || "assets/" + file);
     try { localStorage.setItem("midash.car", file); } catch (_) {}
 }
 
@@ -38,6 +43,7 @@ async function loadCars() {
 
     carSelect.innerHTML = "";
     for (const c of cars) {
+        carMeta[c.file] = { yaw: c.yaw || 0 };
         const opt = document.createElement("option");
         opt.value = c.file;
         opt.textContent = c.name;
@@ -47,7 +53,7 @@ async function loadCars() {
     carSelect.onchange = () => setCar(carSelect.value);
     setCar(initial.file);
 }
-loadCars();
+const carsReady = loadCars();
 
 /* ---------- Shortcuts (editable favorites, persisted) ---------- */
 const DEFAULT_SHORTCUTS = [

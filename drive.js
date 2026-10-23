@@ -200,7 +200,7 @@ function updateCar() {
     const m = document.getElementById("carModel");
     // Seen from behind (like the Android scene); the car yaws a little into the turn.
     if (moving) {
-        m.setAttribute("camera-orbit", `${Math.max(-16, Math.min(16, -turnRate * 0.45)).toFixed(1)}deg 76deg 105%`);
+        m.setAttribute("camera-orbit", `${(carYawDeg + Math.max(-16, Math.min(16, -turnRate * 0.45))).toFixed(1)}deg 76deg 105%`);
     }
 }
 
@@ -475,3 +475,90 @@ carCard.appendChild(mediaCard);
 mediaCard.classList.add("mini");
 mediaCard.addEventListener("click", (e) => { if (!e.target.closest("button")) mediaCard.classList.toggle("open"); });
 document.addEventListener("pointerdown", (e) => { if (!mediaCard.contains(e.target)) mediaCard.classList.remove("open"); });
+
+/* ---------- Mis coches: import .glb / .gltf (kept in the browser IndexedDB) ---------- */
+const carDb = new Promise((res) => {
+    const rq = indexedDB.open("midash-cars", 1);
+    rq.onupgradeneeded = () => rq.result.createObjectStore("cars", { keyPath: "id" });
+    rq.onsuccess = () => res(rq.result);
+    rq.onerror = () => res(null);
+});
+async function dbOp(mode, fn) {
+    const db = await carDb;
+    if (!db) return null;
+    return new Promise((res) => {
+        const tx = db.transaction("cars", mode);
+        const r = fn(tx.objectStore("cars"));
+        tx.oncomplete = () => res(r && r.result);
+        tx.onerror = () => res(null);
+    });
+}
+function addCarOption(rec) {
+    const val = "idb:" + rec.id;
+    carMeta[val] = { yaw: rec.yaw || 0 };
+    if (carUrls[val]) URL.revokeObjectURL(carUrls[val]);
+    carUrls[val] = URL.createObjectURL(rec.blob);
+    let opt = [...carSelect.options].find((o) => o.value === val);
+    if (!opt) { opt = document.createElement("option"); opt.value = val; carSelect.appendChild(opt); }
+    opt.textContent = rec.name;
+}
+function removeCarOption(id) {
+    const val = "idb:" + id;
+    [...carSelect.options].filter((o) => o.value === val).forEach((o) => o.remove());
+    delete carMeta[val];
+    delete carUrls[val];
+}
+const wantedCar = (() => { try { return localStorage.getItem("midash.car"); } catch (_) { return null; } })();
+(async () => {
+    await carsReady;
+    const all = (await dbOp("readonly", (s) => s.getAll())) || [];
+    all.forEach(addCarOption);
+    const saved = wantedCar;
+    if (saved && saved.startsWith("idb:") && carUrls[saved]) { carSelect.value = saved; setCar(saved); }
+})();
+async function importCarFile(file) {
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (ext !== "glb" && ext !== "gltf") { alert("Solo se admiten archivos .glb o .gltf"); return; }
+    if (file.size > 80 * 1024 * 1024) { alert("El archivo pesa demasiado (máx. 80 MB)"); return; }
+    const rec = { id: String(Date.now()), name: file.name.replace(/\.[^.]+$/, ""), blob: file, yaw: 0 };
+    await dbOp("readwrite", (s) => s.put(rec));
+    addCarOption(rec);
+    carSelect.value = "idb:" + rec.id;
+    setCar("idb:" + rec.id);
+}
+async function renderMyCars(box) {
+    const all = (await dbOp("readonly", (s) => s.getAll())) || [];
+    box.innerHTML = "";
+    all.forEach((rec) => {
+        const row = document.createElement("div");
+        row.className = "op-car";
+        row.innerHTML = "<span></span><button data-a='rot'>Girar</button><button data-a='del'>Borrar</button>";
+        row.querySelector("span").textContent = rec.name;
+        row.querySelector("[data-a=rot]").onclick = async () => {
+            rec.yaw = ((rec.yaw || 0) + 90) % 360;
+            await dbOp("readwrite", (s) => s.put(rec));
+            addCarOption(rec);
+            if (carSelect.value === "idb:" + rec.id) setCar("idb:" + rec.id);
+            renderMyCars(box);
+        };
+        row.querySelector("[data-a=del]").onclick = async () => {
+            await dbOp("readwrite", (s) => s.delete(rec.id));
+            removeCarOption(rec.id);
+            if (!carSelect.value) { carSelect.selectedIndex = 0; setCar(carSelect.value); }
+            renderMyCars(box);
+        };
+        box.appendChild(row);
+    });
+}
+const _renderOpt2 = renderOpt;
+renderOpt = function () {
+    _renderOpt2();
+    const sec = document.createElement("div");
+    sec.innerHTML = "<b>Mis coches</b><small>Añade archivos .glb (o .gltf sin archivos externos). Aparecen en el selector del coche. Si sale girado, usa Girar.</small>" +
+        "<label class='op-file'>+ Añadir coche<input type='file' accept='.glb,.gltf,model/gltf-binary,model/gltf+json' hidden></label><div class='op-cars'></div>";
+    optPanel.insertBefore(sec, optPanel.children[2]);
+    sec.querySelector("input").onchange = async (e) => {
+        if (e.target.files[0]) { await importCarFile(e.target.files[0]); renderMyCars(sec.querySelector(".op-cars")); }
+    };
+    renderMyCars(sec.querySelector(".op-cars"));
+};

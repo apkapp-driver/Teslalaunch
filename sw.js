@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Network-first so updates are picked up as soon as
 // you're online; the cache is only the fallback. Map tiles and routing always need the network.
-const CACHE = "midash-v4";
+const CACHE = "midash-v5";
 const SHELL = [
     "./",
     "./index.html",

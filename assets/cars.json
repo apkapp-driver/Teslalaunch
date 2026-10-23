@@ -1,4 +1,53 @@
 [
-  { "id": "coche", "name": "Mi coche", "file": "car.glb" },
-  { "id": "model3", "name": "Tesla Model 3", "file": "tesla.glb" }
+  {
+    "id": "coche",
+    "name": "Mi coche",
+    "file": "car.glb"
+  },
+  {
+    "id": "model3",
+    "name": "Tesla Model 3",
+    "file": "tesla.glb"
+  },
+  {
+    "id": "tesla_s",
+    "name": "Tesla (Henry Chi)",
+    "file": "tesla_s.glb"
+  },
+  {
+    "id": "cybertruck",
+    "name": "Tesla Cybertruck",
+    "file": "tesla_cybertruck.glb",
+    "yaw": 180
+  },
+  {
+    "id": "semi",
+    "name": "Tesla Semi",
+    "file": "tesla_semi.glb",
+    "yaw": 180
+  },
+  {
+    "id": "zafira",
+    "name": "Opel Zafira 2002",
+    "file": "opel_zafira.glb",
+    "yaw": 180
+  },
+  {
+    "id": "astra",
+    "name": "Opel Astra GTC 2012",
+    "file": "opel_astra.glb",
+    "yaw": 180
+  },
+  {
+    "id": "astra_h",
+    "name": "Opel Astra H 2008",
+    "file": "opel_astra_h.glb",
+    "yaw": 0
+  },
+  {
+    "id": "zafira_c",
+    "name": "Opel Zafira C 2011",
+    "file": "opel_zafira_c.glb",
+    "yaw": 180
+  }
 ]
