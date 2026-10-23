@@ -180,16 +180,44 @@ map.on("move", () => {
 setInterval(() => { if (performance.now() - mvLast > 700) { visSpeed *= 0.5; visTurn *= 0.5; if (visSpeed < 1) visSpeed = 0; updateCar(); } }, 400);
 function renderCarRoad() {
     const n = road ? road.lanes : 2;
-    let svg = '<polygon points="85,0 115,0 180,100 20,100" fill="rgba(10,14,22,.75)"/>';
-    for (let k = 1; k < n; k++) {
-        const xt = 85 + (30 * k) / n, xb = 20 + (160 * k) / n;
-        svg += `<line class="dash" x1="${xt}" y1="0" x2="${xb}" y2="100" stroke="#fff" stroke-opacity=".7" ` +
-            `stroke-width="1.2" stroke-dasharray="6 7" vector-effect="non-scaling-stroke"/>`;
+    const night = isNight();
+    const HZ = 26; // horizon line (% of the scene height)
+    const sky = night ? ["#070b1f", "#2a3a66"] : ["#5aa9ee", "#d4eafb"];
+    const far = night ? "#1a2442" : "#8fa8c4";
+    const near = night ? "#111a31" : "#6c8aa3";
+    const tree = night ? "#0c2219" : "#3d7a48";
+    const ground = night ? ["#0e1814", "#16231e"] : ["#7cb069", "#5c9150"];
+    let svg = `<defs>
+      <linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient>
+      <linearGradient id="gGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${ground[0]}"/><stop offset="1" stop-color="${ground[1]}"/></linearGradient>
+    </defs>`;
+    svg += `<rect x="0" y="0" width="200" height="${HZ + 1}" fill="url(#gSky)"/>`;
+    if (night) {
+        for (const [x, y, r] of [[14, 5, .5], [38, 12, .4], [62, 4, .5], [90, 9, .4], [120, 3, .5], [146, 11, .4], [172, 6, .5], [190, 14, .4], [28, 18, .3], [104, 16, .3]]) {
+            svg += `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" fill-opacity=".8"/>`;
+        }
+        svg += `<circle cx="160" cy="9" r="3.2" fill="#f4f1d8"/><circle cx="161.4" cy="8.2" r="3" fill="#2a3a66" opacity=".55"/>`;
+    } else {
+        svg += `<circle cx="150" cy="10" r="4.5" fill="#fff6c8" fill-opacity=".95"/><ellipse cx="40" cy="9" rx="12" ry="2.6" fill="#fff" fill-opacity=".7"/><ellipse cx="52" cy="11" rx="9" ry="2" fill="#fff" fill-opacity=".6"/><ellipse cx="118" cy="14" rx="10" ry="2.2" fill="#fff" fill-opacity=".55"/>`;
     }
-    svg += '<line x1="85" y1="0" x2="20" y2="100" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
-    svg += '<line x1="115" y1="0" x2="180" y2="100" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+    svg += `<path d="M0,${HZ} L0,14 L16,7 L30,13 L47,4 L68,15 L86,9 L112,15 L134,6 L152,13 L174,8 L200,15 L200,${HZ} Z" fill="${far}"/>`;
+    svg += `<path d="M0,${HZ} L0,20 L22,13 L44,19 L66,15 L92,21 L120,18 L146,14 L170,20 L200,16 L200,${HZ} Z" fill="${near}"/>`;
+    for (const x of [6, 14, 22, 33, 44, 55, 66, 74, 126, 136, 148, 158, 169, 181, 192]) {
+        const h = 4 + ((x * 7) % 5);
+        svg += `<polygon points="${x - 2.2},${HZ} ${x},${HZ - h} ${x + 2.2},${HZ}" fill="${tree}"/>`;
+        svg += `<polygon points="${x - 1.6},${HZ - h * 0.45} ${x},${HZ - h - 1.6} ${x + 1.6},${HZ - h * 0.45}" fill="${tree}"/>`;
+    }
+    svg += `<rect x="0" y="${HZ}" width="200" height="${100 - HZ}" fill="url(#gGround)"/>`;
+    svg += `<polygon points="86,${HZ} 114,${HZ} 182,100 18,100" fill="rgba(14,18,28,.88)"/>`;
+    for (let k = 1; k < n; k++) {
+        const xt = 86 + (28 * k) / n, xb = 18 + (164 * k) / n;
+        svg += `<line class="dash" x1="${xt}" y1="${HZ}" x2="${xb}" y2="100" stroke="#fff" stroke-opacity=".75" stroke-width="1.2" stroke-dasharray="6 7" vector-effect="non-scaling-stroke"/>`;
+    }
+    svg += `<line x1="86" y1="${HZ}" x2="18" y2="100" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
+    svg += `<line x1="114" y1="${HZ}" x2="182" y2="100" stroke="#fff" stroke-opacity=".55" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`;
     document.getElementById("carRoad").innerHTML = svg;
 }
+
 function updateCar() {
     const moving = visSpeed > 3;
     const turnRate = visTurn;
@@ -446,14 +474,6 @@ function renderOpt() {
 $s("optBtn").addEventListener("click", () => { optPanel.hidden = !optPanel.hidden; if (!optPanel.hidden) renderOpt(); });
 
 /* ---------- Layout v2: car drawer + apps drawer + map type inside options ---------- */
-const leftPane = document.querySelector(".pane-left"), appsPane = $s("apps"), mapPane = document.querySelector(".pane-map");
-$s("appsBtn").addEventListener("click", () => {
-    appsPane.classList.toggle("open");
-    if (appsPane.parentElement !== document.body) document.body.appendChild(appsPane); // sits above the fullscreen map
-});
-document.addEventListener("pointerdown", (e) => {
-    if (appsPane.classList.contains("open") && !appsPane.contains(e.target) && e.target !== $s("appsBtn")) appsPane.classList.remove("open");
-});
 const _renderOpt = renderOpt;
 renderOpt = function () {
     _renderOpt();
@@ -469,12 +489,6 @@ const _opt = optPanel;
 new MutationObserver(() => { viewBar.style.display = optPanel.contains(viewBar) && !optPanel.hidden ? "flex" : "none"; })
     .observe(optPanel, { attributes: true, childList: true, subtree: false });
 
-/* ---------- Music: small bar at the top-left of the car card; click to open the player ---------- */
-const mediaCard = document.querySelector(".card.media"), carCard = document.querySelector(".card.car");
-carCard.appendChild(mediaCard);
-mediaCard.classList.add("mini");
-mediaCard.addEventListener("click", (e) => { if (!e.target.closest("button")) mediaCard.classList.toggle("open"); });
-document.addEventListener("pointerdown", (e) => { if (!mediaCard.contains(e.target)) mediaCard.classList.remove("open"); });
 
 /* ---------- Mis coches: import .glb / .gltf (kept in the browser IndexedDB) ---------- */
 const carDb = new Promise((res) => {
@@ -561,4 +575,12 @@ renderOpt = function () {
         if (e.target.files[0]) { await importCarFile(e.target.files[0]); renderMyCars(sec.querySelector(".op-cars")); }
     };
     renderMyCars(sec.querySelector(".op-cars"));
+    // Map zoom goes right under the map type so it is the first thing you see.
+    const zl = optPanel.querySelector(".op-zoom");
+    if (zl && zl.closest("label")) optPanel.insertBefore(zl.closest("label"), optPanel.children[2]);
 };
+
+// The simulator scenery follows the theme (day / night).
+const _applyTheme2 = applyTheme;
+applyTheme = function () { _applyTheme2(); renderCarRoad(); };
+setInterval(() => renderCarRoad(), 60000);

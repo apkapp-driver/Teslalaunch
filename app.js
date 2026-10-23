@@ -57,22 +57,45 @@ const carsReady = loadCars();
 
 /* ---------- Shortcuts (editable favorites, persisted) ---------- */
 const DEFAULT_SHORTCUTS = [
-    { label: "Mapas", emoji: "🗺️", url: "https://www.openstreetmap.org" },
-    { label: "Música", emoji: "🎵", url: "https://open.spotify.com" },
-    { label: "Radio", emoji: "📻", url: "https://www.radio.garden" },
-    { label: "Tiempo", emoji: "☀️", url: "https://www.windy.com" },
-    { label: "Noticias", emoji: "📰", url: "https://news.google.com" },
-    { label: "Teléfono", emoji: "📞", url: "tel:" },
+    { label: "Nav Hub", icon: "navhub", url: "https://haymadre9-lab.github.io/Autoboard_V2/nav-hub/" },
+    { label: "Mapas", icon: "maps", url: "https://www.openstreetmap.org" },
+    { label: "Música", icon: "music", url: "https://open.spotify.com" },
+    { label: "Radio", icon: "radio", url: "https://www.radio.garden" },
+    { label: "Tiempo", icon: "weather", url: "https://www.windy.com" },
+    { label: "Noticias", icon: "news", url: "https://news.google.com" },
+    { label: "Teléfono", icon: "phone", url: "tel:" },
 ];
+
+/* Hand-drawn glyphs (48x48, white strokes) on a coloured gradient tile. */
+const APP_ICONS = {
+    navhub: { c: ["#2F8CFF", "#22D3EE"], g: '<circle cx="24" cy="24" r="15"/><path d="M31 17l-5 11-11 5 5-11z" fill="rgba(255,255,255,.35)"/><circle cx="24" cy="24" r="1.8" fill="#fff"/>' },
+    maps: { c: ["#22C55E", "#0EA5A4"], g: '<path d="M24 6c-7 0-12 5.2-12 11.6C12 27 24 42 24 42s12-15 12-24.4C36 11.2 31 6 24 6z" fill="rgba(255,255,255,.22)"/><circle cx="24" cy="18" r="4.5"/>' },
+    music: { c: ["#A855F7", "#EC4899"], g: '<path d="M19 33V14l16-4v19"/><circle cx="14.5" cy="33.5" r="4.5" fill="rgba(255,255,255,.3)"/><circle cx="30.5" cy="29.5" r="4.5" fill="rgba(255,255,255,.3)"/>' },
+    radio: { c: ["#FB923C", "#EF4444"], g: '<rect x="8" y="17" width="32" height="21" rx="4.5" fill="rgba(255,255,255,.2)"/><circle cx="29" cy="27.5" r="5.5"/><path d="M13 24h8M13 30h8M14 17l17-9"/>' },
+    weather: { c: ["#38BDF8", "#6366F1"], g: '<circle cx="18" cy="17" r="5.5" fill="rgba(255,236,150,.9)" stroke="none"/><path d="M18 6v2.5M6 17h2.5M9.4 8.4l1.8 1.8M26.6 8.4l-1.8 1.8"/><path d="M20 38h16a6 6 0 0 0 0-12 8 8 0 0 0-15 2 5 5 0 0 0-1 10z" fill="rgba(255,255,255,.28)"/>' },
+    news: { c: ["#64748B", "#334155"], g: '<rect x="9" y="9" width="30" height="30" rx="4.5" fill="rgba(255,255,255,.18)"/><path d="M15 17h18M15 23h18M15 29h10"/>' },
+    phone: { c: ["#4ADE80", "#16A34A"], g: '<path d="M14 8l5 1.2 2 7-4 3c2 5 5 8.5 10 10.5l3-4 7 2 1 5c0 3-3 5.5-6 5.5C20 38 10 28 9 15c0-3 2-6.500 5-7z" fill="rgba(255,255,255,.25)"/>' },
+};
+function appIconHtml(s) {
+    const ic = APP_ICONS[s.icon];
+    if (ic) {
+        return `<span class="app-ico" style="--c1:${ic.c[0]};--c2:${ic.c[1]}"><svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${ic.g}</svg></span>`;
+    }
+    // Custom shortcut: its emoji on a gradient picked from the name.
+    let h = 0;
+    for (const ch of s.label || "") h = (h * 31 + ch.charCodeAt(0)) % 360;
+    return `<span class="app-ico" style="--c1:hsl(${h} 70% 55%);--c2:hsl(${(h + 40) % 360} 70% 42%)"><span class="app-emoji">${s.emoji || "⭐"}</span></span>`;
+}
+
 const appsEl = document.getElementById("apps");
 let editMode = false;
 let shortcuts = DEFAULT_SHORTCUTS.slice();
 try {
-    const saved = JSON.parse(localStorage.getItem("midash.shortcuts"));
-    if (Array.isArray(saved)) shortcuts = saved;
+    const saved = JSON.parse(localStorage.getItem("midash.shortcuts2"));
+    if (Array.isArray(saved) && saved.length) shortcuts = saved;
 } catch (_) {}
 function saveShortcuts() {
-    try { localStorage.setItem("midash.shortcuts", JSON.stringify(shortcuts)); } catch (_) {}
+    try { localStorage.setItem("midash.shortcuts2", JSON.stringify(shortcuts)); } catch (_) {}
 }
 function renderApps() {
     appsEl.innerHTML = "";
@@ -80,8 +103,8 @@ function renderApps() {
         const tile = document.createElement(editMode ? "div" : "a");
         tile.className = "app-tile";
         if (!editMode) { tile.href = s.url; tile.target = "_blank"; tile.rel = "noopener"; }
-        tile.innerHTML =
-            `<span class="app-emoji">${s.emoji}</span><span class="app-label">${s.label}</span>`;
+        tile.innerHTML = appIconHtml(s) + `<span class="app-label"></span>`;
+        tile.querySelector(".app-label").textContent = s.label;
         if (editMode) {
             const x = document.createElement("button");
             x.className = "tile-del"; x.textContent = "×";
@@ -92,7 +115,7 @@ function renderApps() {
     });
     const add = document.createElement("button");
     add.className = "app-tile ghost";
-    add.innerHTML = `<span class="app-emoji">＋</span><span class="app-label">Añadir</span>`;
+    add.innerHTML = `<span class="app-ico plain"><span class="app-emoji">＋</span></span><span class="app-label">Añadir</span>`;
     add.onclick = () => {
         const label = prompt("Nombre del acceso:"); if (!label) return;
         const url = prompt("URL (https://… o tel:):", "https://"); if (!url) return;
@@ -102,25 +125,12 @@ function renderApps() {
     appsEl.appendChild(add);
     const edit = document.createElement("button");
     edit.className = "app-tile ghost";
-    edit.innerHTML = `<span class="app-emoji">${editMode ? "✓" : "✎"}</span>` +
+    edit.innerHTML = `<span class="app-ico plain"><span class="app-emoji">${editMode ? "✓" : "✎"}</span></span>` +
         `<span class="app-label">${editMode ? "Hecho" : "Editar"}</span>`;
     edit.onclick = () => { editMode = !editMode; renderApps(); };
     appsEl.appendChild(edit);
 }
 renderApps();
-
-/* ---------- Media card (demo) ---------- */
-const media = { playing: false };
-document.querySelectorAll("[data-media]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-        if (btn.getAttribute("data-media") === "play") {
-            media.playing = !media.playing;
-            btn.textContent = media.playing ? "⏸" : "▶";
-            document.getElementById("mediaTitle").textContent =
-                media.playing ? "Reproduciendo…" : "En pausa";
-        }
-    });
-});
 
 /* ---------- Day / night theme ---------- */
 const STYLES = {
