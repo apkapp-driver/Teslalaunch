@@ -372,7 +372,11 @@ function addOverlays() {
 
 /** First label layer of the current style: our layers go below it so street names stay readable. */
 function firstSymbolId() {
-    const l = map.getStyle().layers.find((x) => x.type === "symbol");
+    // Above every road layer (buildings are never hidden under roads), below the labels.
+    const layers = map.getStyle().layers;
+    let lastRoad = -1;
+    layers.forEach((l, i) => { if (l["source-layer"] === "transportation" && l.type === "line") lastRoad = i; });
+    const l = layers.slice(lastRoad + 1).find((x) => x.type === "symbol");
     return l ? l.id : undefined;
 }
 

@@ -163,6 +163,21 @@ let tripLast = null;
 
 /* ---------- Car scene: road lanes + speed + steering ---------- */
 let prevHeading = null, prevT = 0, turnRate = 0;
+// The 3D scene is driven by how the MAP moves (centre travel and rotation), not by raw GPS.
+let visSpeed = 0, visTurn = 0, mvPrev = null, mvLast = 0;
+map.on("move", () => {
+    const now = performance.now(), c = map.getCenter(), b = map.getBearing();
+    if (mvPrev && now - mvPrev.t > 30) {
+        const dt = (now - mvPrev.t) / 1000;
+        const v = (haversine(mvPrev.lon, mvPrev.lat, c.lng, c.lat) / dt) * 3.6;
+        const dB = ((b - mvPrev.b + 540) % 360) - 180;
+        visSpeed = visSpeed * 0.7 + Math.min(v, 250) * 0.3;
+        visTurn = visTurn * 0.7 + (dB / dt) * 0.3;
+        mvPrev = { t: now, lon: c.lng, lat: c.lat, b }; mvLast = now;
+        updateCar();
+    } else if (!mvPrev) mvPrev = { t: now, lon: c.lng, lat: c.lat, b };
+});
+setInterval(() => { if (performance.now() - mvLast > 700) { visSpeed *= 0.5; visTurn *= 0.5; if (visSpeed < 1) visSpeed = 0; updateCar(); } }, 400);
 function renderCarRoad() {
     const n = road ? road.lanes : 2;
     let svg = '<polygon points="85,0 115,0 180,100 20,100" fill="rgba(10,14,22,.75)"/>';
@@ -174,12 +189,12 @@ function renderCarRoad() {
     svg += '<line x1="85" y1="0" x2="20" y2="100" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
     svg += '<line x1="115" y1="0" x2="180" y2="100" stroke="#fff" stroke-opacity=".5" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
     document.getElementById("carRoad").innerHTML = svg;
-    document.getElementById("carLanes").textContent = `${n} carriles`;
 }
 function updateCar() {
-    const moving = mySpeed > 3;
+    const moving = visSpeed > 3;
+    const turnRate = visTurn;
     const road_ = document.getElementById("carRoad");
-    road_.style.setProperty("--dash-dur", Math.max(0.12, 3 / Math.max(1, mySpeed / 10)) + "s");
+    road_.style.setProperty("--dash-dur", Math.max(0.12, 3 / Math.max(1, visSpeed / 10)) + "s");
     road_.classList.toggle("moving", moving);
     road_.style.transform = `skewX(${(-turnRate * 0.5).toFixed(1)}deg)`;
     const m = document.getElementById("carModel");
@@ -451,3 +466,10 @@ document.body.appendChild(viewBar); viewBar.style.display = "none";
 const _opt = optPanel;
 new MutationObserver(() => { viewBar.style.display = optPanel.contains(viewBar) && !optPanel.hidden ? "flex" : "none"; })
     .observe(optPanel, { attributes: true, childList: true, subtree: false });
+
+/* ---------- Music: small bar at the top-left of the car card; click to open the player ---------- */
+const mediaCard = document.querySelector(".card.media"), carCard = document.querySelector(".card.car");
+carCard.appendChild(mediaCard);
+mediaCard.classList.add("mini");
+mediaCard.addEventListener("click", (e) => { if (!e.target.closest("button")) mediaCard.classList.toggle("open"); });
+document.addEventListener("pointerdown", (e) => { if (!mediaCard.contains(e.target)) mediaCard.classList.remove("open"); });

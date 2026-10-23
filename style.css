@@ -369,3 +369,22 @@ html, body {
     .pane-left .car { flex-direction: column; }
     .pane-left .car .car-stage { flex: none; width: 100%; }
 }
+
+/* Music mini bar (inside the car card) */
+.car { position: relative; }
+.car-lanes { display: none !important; }
+.card.media.mini {
+    position: absolute; top: 8px; left: 8px; z-index: 5; flex: none !important; width: auto; max-width: 240px;
+    display: flex; align-items: center; gap: 8px; padding: 4px 10px 4px 4px; border-radius: 14px;
+    background: rgba(53,61,80,0.92); cursor: pointer;
+}
+.card.media.mini .media-art { width: 26px; height: 26px; font-size: 14px; border-radius: 8px; }
+.card.media.mini .media-info { min-width: 0; }
+.card.media.mini .media-title { font-size: 12px; max-width: 150px; }
+.card.media.mini .media-artist { display: none; }
+.card.media.mini .media-controls { display: none; }
+.card.media.mini.open { flex-wrap: wrap; width: 270px; max-width: 270px; padding: 10px; border-radius: 18px; }
+.card.media.mini.open .media-title { max-width: 190px; font-size: 14px; }
+.card.media.mini.open .media-artist { display: block; }
+.card.media.mini.open .media-controls { display: flex; width: 100%; justify-content: center; }
+.pane-left .media { flex: none; }
