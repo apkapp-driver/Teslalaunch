@@ -341,3 +341,31 @@ html, body {
 .nav-eta[hidden], .nav-card[hidden], .nav-instruction[hidden], .nav-stop[hidden], .search-panel[hidden] { display: none !important; }
 .nav-card { left: 50% !important; transform: translateX(-50%); top: 12px !important; }
 .nav-instruction { top: 12px !important; }
+
+/* ===== Layout v2: car drawer on top, map below, apps as a drawer over the map ===== */
+.dash { position: relative; grid-template-columns: 1fr !important; grid-template-rows: auto 1fr !important; gap: 12px; }
+.pane-left { flex-direction: row !important; align-items: stretch; justify-content: flex-start !important; overflow: visible; }
+.pane-left .clock { display: none !important; }
+.pane-left .media { flex: 0 0 300px; align-self: center; }
+.pane-left .car { flex: 1; min-width: 0; flex-direction: row; align-items: center; gap: 14px; }
+.pane-left .car .car-select { align-self: flex-start; }
+.pane-left .car .car-stage { flex: 0 0 320px; height: 150px; }
+.pane-left .car .car-stats, .pane-left .car .batt { flex: 1; }
+.pane-left.collapsed { display: none; }
+.pane-map { min-height: 0; }
+.drawer-btn { left: 12px; top: 12px; }
+.apps-btn { right: 168px; bottom: 12px; }
+.pane-apps {
+    position: absolute; right: 32px; bottom: 80px; z-index: 60; width: min(380px, calc(100% - 40px));
+    max-height: 60vh; background: rgba(28,34,48,0.97); border-radius: 20px; padding: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none;
+}
+.pane-apps.open { display: grid; }
+.opt-panel .view-bar { position: static !important; flex-direction: row; background: none; padding: 0; flex-wrap: wrap; }
+@media (max-width: 820px) {
+    .dash { grid-template-rows: auto 1fr !important; }
+    .pane-left { flex-direction: column !important; }
+    .pane-left .media { flex: none; }
+    .pane-left .car { flex-direction: column; }
+    .pane-left .car .car-stage { flex: none; width: 100%; }
+}

@@ -18,7 +18,7 @@
     <main class="dash">
         <!-- Left: clock + media + car -->
         <section class="pane pane-left">
-            <div class="clock">
+            <div class="clock" hidden>
                 <div id="time" class="time">--:--</div>
                 <div id="date" class="date"></div>
             </div>
@@ -45,8 +45,7 @@
                     id="carModel"
                     src="assets/car.glb"
                     camera-controls
-                    auto-rotate
-                    auto-rotate-delay="0"
+                    camera-orbit="0deg 76deg 105%"
                     rotation-per-second="20deg"
                     interaction-prompt="none"
                     shadow-intensity="1"
@@ -67,6 +66,8 @@
         <!-- Center: map -->
         <section class="pane pane-map">
             <div id="map" class="map"></div>
+            <button id="drawerBtn" class="ctl drawer-btn" type="button" aria-label="Coche">🚗</button>
+            <button id="appsBtn" class="ctl apps-btn" type="button" aria-label="Apps">⊞</button>
             <button id="searchBtn" class="ctl search-btn" type="button" aria-label="Buscar">🔍</button>
             <div id="favPlaces" class="fav-places">
                 <button class="fav-chip" data-place="home" aria-label="Casa">🏠</button>

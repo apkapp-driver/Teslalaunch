@@ -183,11 +183,9 @@ function updateCar() {
     road_.classList.toggle("moving", moving);
     road_.style.transform = `skewX(${(-turnRate * 0.5).toFixed(1)}deg)`;
     const m = document.getElementById("carModel");
+    // Seen from behind (like the Android scene); the car yaws a little into the turn.
     if (moving) {
-        m.removeAttribute("auto-rotate");
-        m.setAttribute("camera-orbit", `${(180 + Math.max(-16, Math.min(16, turnRate * 0.45))).toFixed(1)}deg 76deg 105%`);
-    } else if (!m.hasAttribute("auto-rotate")) {
-        m.setAttribute("auto-rotate", "");
+        m.setAttribute("camera-orbit", `${Math.max(-16, Math.min(16, -turnRate * 0.45)).toFixed(1)}deg 76deg 105%`);
     }
 }
 
@@ -424,3 +422,32 @@ function renderOpt() {
     $o("oFav").onclick = () => { favs = []; store.set("favs", favs); };
 }
 $s("optBtn").addEventListener("click", () => { optPanel.hidden = !optPanel.hidden; if (!optPanel.hidden) renderOpt(); });
+
+/* ---------- Layout v2: car drawer + apps drawer + map type inside options ---------- */
+const leftPane = document.querySelector(".pane-left"), appsPane = $s("apps"), mapPane = document.querySelector(".pane-map");
+$s("drawerBtn").addEventListener("click", () => {
+    mapPane.classList.remove("fullscreen");
+    leftPane.classList.toggle("collapsed");
+    setTimeout(() => map.resize(), 80);
+});
+$s("appsBtn").addEventListener("click", () => {
+    appsPane.classList.toggle("open");
+    if (appsPane.parentElement !== document.body) document.body.appendChild(appsPane); // sits above the fullscreen map
+});
+document.addEventListener("pointerdown", (e) => {
+    if (appsPane.classList.contains("open") && !appsPane.contains(e.target) && e.target !== $s("appsBtn")) appsPane.classList.remove("open");
+});
+const _renderOpt = renderOpt;
+renderOpt = function () {
+    _renderOpt();
+    const w = document.createElement("div");
+    w.innerHTML = "<b>Tipo de mapa</b>";
+    w.appendChild(viewBar);
+    optPanel.insertBefore(w, optPanel.children[1]);
+    viewBar.style.display = "flex";
+};
+// Keep the view selector out of the map until Options opens it.
+document.body.appendChild(viewBar); viewBar.style.display = "none";
+const _opt = optPanel;
+new MutationObserver(() => { viewBar.style.display = optPanel.contains(viewBar) && !optPanel.hidden ? "flex" : "none"; })
+    .observe(optPanel, { attributes: true, childList: true, subtree: false });
