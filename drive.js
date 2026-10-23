@@ -8,7 +8,7 @@
 
 /* ---------- Options (localStorage) ---------- */
 const OPT = Object.assign(
-    { sound: true, vol: 0.35, voice: true, tol: 0, warn: 500, ttKey: "" },
+    { sound: true, vol: 0.35, voice: true, tol: 0, warn: 500, ttKey: "", zoomLevel: 0 },
     (() => { try { return JSON.parse(localStorage.getItem("midash.opt")) || {}; } catch (_) { return {}; } })(),
 );
 function saveOpt() { try { localStorage.setItem("midash.opt", JSON.stringify(OPT)); } catch (_) {} }
@@ -418,6 +418,8 @@ function renderOpt() {
       <label><input type="checkbox" id="oVoice" ${OPT.voice ? "checked" : ""}> Voz (navegación y señales)</label>
       <label>Aviso de radar: <b id="oWarnV">${OPT.warn}</b> m <input type="range" id="oWarn" min="200" max="1000" step="50" value="${OPT.warn}"></label>
       <label>Tolerancia: +<b id="oTolV">${OPT.tol}</b> km/h <input type="range" id="oTol" min="0" max="20" step="1" value="${OPT.tol}"></label>
+      <label>Zoom del mapa
+        <span class="op-zoom">${["Normal","Cerca","Más cerca","Muy cerca"].map((t,i)=>"<button data-z=\""+i+"\" class=\""+(OPT.zoomLevel===i?"on":"")+"\">"+t+"</button>").join("")}</span></label>
       <label>Clave TomTom (tráfico en la ruta)<input type="text" id="oKey" value="${OPT.ttKey}" placeholder="opcional, gratuita en developer.tomtom.com"></label>
       <div class="op-trip"><b>Viaje</b>: ${km} km · ${h}:${String(m).padStart(2, "0")} h · media ${avg} km/h · máx ${Math.round(trip.max)} km/h
         <button id="oReset">Reiniciar</button></div>
@@ -431,6 +433,11 @@ function renderOpt() {
     $o("oVoice").onchange = (e) => { OPT.voice = e.target.checked; saveOpt(); };
     $o("oWarn").oninput = (e) => { OPT.warn = +e.target.value; $o("oWarnV").textContent = OPT.warn; saveOpt(); };
     $o("oTol").oninput = (e) => { OPT.tol = +e.target.value; $o("oTolV").textContent = OPT.tol; saveOpt(); };
+    optPanel.querySelectorAll(".op-zoom button").forEach((b) => b.onclick = () => {
+        OPT.zoomLevel = +b.dataset.z; saveOpt();
+        optPanel.querySelectorAll(".op-zoom button").forEach((x) => x.classList.toggle("on", x === b));
+        following = true; lastCam = 0; followCamera();
+    });
     $o("oKey").onchange = (e) => { OPT.ttKey = e.target.value.trim(); saveOpt(); trafficUpdate(); };
     $o("oReset").onclick = () => { trip.dist = trip.sec = trip.max = 0; store.set("trip", trip); renderOpt(); };
     $o("oRec").onclick = () => { recents = []; store.set("recents", recents); };
@@ -440,11 +447,6 @@ $s("optBtn").addEventListener("click", () => { optPanel.hidden = !optPanel.hidde
 
 /* ---------- Layout v2: car drawer + apps drawer + map type inside options ---------- */
 const leftPane = document.querySelector(".pane-left"), appsPane = $s("apps"), mapPane = document.querySelector(".pane-map");
-$s("drawerBtn").addEventListener("click", () => {
-    mapPane.classList.remove("fullscreen");
-    leftPane.classList.toggle("collapsed");
-    setTimeout(() => map.resize(), 80);
-});
 $s("appsBtn").addEventListener("click", () => {
     appsPane.classList.toggle("open");
     if (appsPane.parentElement !== document.body) document.body.appendChild(appsPane); // sits above the fullscreen map

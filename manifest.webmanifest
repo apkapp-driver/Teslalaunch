@@ -1,6 +1,6 @@
 {
-  "name": "MiDash",
-  "short_name": "MiDash",
+  "name": "MiDashWeb",
+  "short_name": "MiDashWeb",
   "description": "Dashboard de coche (versión web)",
   "start_url": ".",
   "scope": ".",

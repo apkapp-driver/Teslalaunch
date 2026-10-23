@@ -3,14 +3,14 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>MiDash</title>
+    <title>MiDashWeb</title>
     <meta name="theme-color" content="#0B0E14" />
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
     <link rel="stylesheet"
           href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=4" />
     <script type="module"
             src="https://unpkg.com/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
 </head>
@@ -66,8 +66,7 @@
         <!-- Center: map -->
         <section class="pane pane-map">
             <div id="map" class="map"></div>
-            <button id="drawerBtn" class="ctl drawer-btn" type="button" aria-label="Coche">🚗</button>
-            <button id="appsBtn" class="ctl apps-btn" type="button" aria-label="Apps">⊞</button>
+                        <button id="appsBtn" class="ctl apps-btn" type="button" aria-label="Apps">⊞</button>
             <button id="searchBtn" class="ctl search-btn" type="button" aria-label="Buscar">🔍</button>
             <div id="favPlaces" class="fav-places">
                 <button class="fav-chip" data-place="home" aria-label="Casa">🏠</button>
@@ -120,7 +119,7 @@
     </main>
 
     <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-    <script src="app.js"></script>
-    <script src="drive.js"></script>
+    <script src="app.js?v=4"></script>
+    <script src="drive.js?v=4"></script>
 </body>
 </html>

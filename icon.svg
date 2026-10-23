@@ -5,4 +5,6 @@
     <path d="M54 54 L68 40" fill="none" stroke="#ECEFF4" stroke-width="5" stroke-linecap="round"/>
     <circle cx="54" cy="58" r="5" fill="#4FC3F7"/>
   </g>
+  <rect x="58" y="76" width="44" height="22" rx="8" fill="#4FC3F7"/>
+  <text x="80" y="92" font-family="Arial,sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="#0B0E14">WEB</text>
 </svg>

@@ -210,7 +210,8 @@ function zoomForSpeed(kmh) {
 function zoomFor(kmh, distToTurn) {
     let z = zoomForSpeed(kmh);
     if (distToTurn != null && distToTurn < 220) z += 0.8;
-    return Math.min(z, 18);
+    const extra = typeof OPT !== "undefined" ? (OPT.zoomLevel || 0) * 0.6 : 0;
+    return Math.min(z + extra, 19.5);
 }
 function nextTurnDist() { return nav.active ? nav.dNext : null; }
 
@@ -319,13 +320,6 @@ fullBtn.onclick = () => {
     setTimeout(() => map.resize(), 60);
 };
 document.getElementById("map").appendChild(fullBtn);
-// On short screens (a phone held sideways) the 3-column dashboard leaves the map tiny:
-// open with the map full-screen; the ✕ brings the other panels back.
-if (window.matchMedia("(max-height: 520px)").matches) {
-    document.querySelector(".pane-map").classList.add("fullscreen");
-    fullBtn.textContent = "✕";
-    setTimeout(() => map.resize(), 60);
-}
 
 /* ---------- Radars + signs (data kept so they re-add on style switch) ---------- */
 const SIGN_COLORS = { s: "#E53935", c: "#FB8C00", t: "#43A047", p: "#1E88E5" };

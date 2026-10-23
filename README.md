@@ -1,4 +1,4 @@
-# MiDash Web
+# MiDashWeb
 
 Versión **web (PWA)** del dashboard, pensada para correr en el **navegador del
 Tesla** o alojarse gratis en **GitHub Pages**. Incluye:

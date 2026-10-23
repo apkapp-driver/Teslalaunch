@@ -388,3 +388,20 @@ html, body {
 .card.media.mini.open .media-artist { display: block; }
 .card.media.mini.open .media-controls { display: flex; width: 100%; justify-content: center; }
 .pane-left .media { flex: none; }
+
+/* Bottom bar: as low as possible; the radar notice sits centred right above it */
+.nav-eta { bottom: 6px !important; padding: 4px 6px 4px 14px !important; border-radius: 14px !important; }
+.eta-big { font-size: 18px !important; }
+.eta-sub { font-size: 13px !important; }
+.eta-stop { width: 28px !important; height: 28px !important; }
+.radar-banner { left: 50% !important; transform: translateX(-50%); bottom: 12px !important; }
+.pane-map:has(#navEta:not([hidden])) .radar-banner { bottom: 56px !important; }
+.op-zoom { display: flex; gap: 4px; flex-wrap: wrap; }
+.op-zoom button.on { background: var(--primary) !important; color: #0B0E14 !important; font-weight: 600; }
+
+/* Car bar: the 3D car gets the whole width (stats on the right), apps stay closed until ⊞ */
+.pane-left .car { justify-content: center; }
+.pane-left .car .car-stage { flex: 1 1 auto !important; max-width: 560px; height: 150px; }
+.pane-left .car .car-stats { flex: 0 0 auto !important; }
+.pane-left .car .batt { flex: 0 0 160px !important; }
+.pane-apps:not(.open) { display: none !important; }
